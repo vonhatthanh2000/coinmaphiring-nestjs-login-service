@@ -10,13 +10,13 @@ export class UserService {
   ) {}
 
   async existByEmail(email: string): Promise<boolean> {
-    const user = await this.userRepository.findOneOrFail({ where: { email } });
+    const user = await this.userRepository.findOne({ where: { email } });
     if (user) return true;
     return false;
   }
 
   async existByUsername(username: string): Promise<boolean> {
-    const user = await this.userRepository.findOneOrFail({
+    const user = await this.userRepository.findOne({
       where: { username },
     });
     if (user) return true;

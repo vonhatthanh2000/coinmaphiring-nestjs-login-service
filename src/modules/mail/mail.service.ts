@@ -16,10 +16,7 @@ export class MailService {
     await this.mailerService.sendMail({
       to: user.email,
       subject: 'Welcome to Pikasso! Confirm your Email',
-      template: path.join(
-        __dirname,
-        '../config/mail/templates/confirmation.hbs',
-      ),
+      template: `${__dirname}/templates/confirmation`,
       context: {
         name: user.username,
         url,
