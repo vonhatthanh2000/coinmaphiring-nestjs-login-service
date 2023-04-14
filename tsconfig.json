@@ -22,7 +22,9 @@
       "@utils": ["src/utils"],
       "@config": ["src/config"],
       "@entities": ["src/entities"],
-      "@enums": ["src/enums"]
+      "@enums": ["src/enums"],
+      "@decorators": ["src/decorators"],
+      "@modules": ["src/modules"]
     }
   }
 }
