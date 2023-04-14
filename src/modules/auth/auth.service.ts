@@ -3,6 +3,7 @@ import { UserStatus } from '@enums';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MailService } from '../mail/mail.service';
 import { UserService } from '../user/user.service';
 import { RegiterUserDto } from './dtos';
 
@@ -11,6 +12,7 @@ export class AuthService {
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly userService: UserService,
+    private readonly mailService: MailService,
   ) {}
 
   async registerUserAccount(dto: RegiterUserDto): Promise<User> {
@@ -33,6 +35,7 @@ export class AuthService {
     });
     const user = await this.userRepository.save(userInput);
     // Send email to user
+    await this.mailService.sendUserConfirmationEmail(user, verifyToken);
     return user;
   }
 }
