@@ -22,4 +22,12 @@ export class UserService {
     if (user) return true;
     return false;
   }
+
+  findByUsername(username: string) {
+    return this.userRepository.findOne({ where: { username } });
+  }
+
+  findByEmail(email: string) {
+    return this.userRepository.findOne({ where: { email } });
+  }
 }

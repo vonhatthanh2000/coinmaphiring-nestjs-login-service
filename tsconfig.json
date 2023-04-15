@@ -24,7 +24,8 @@
       "@entities": ["src/entities"],
       "@enums": ["src/enums"],
       "@decorators": ["src/decorators"],
-      "@modules": ["src/modules"]
+      "@modules": ["src/modules"],
+      "@interfaces": ["src/interfaces"]
     }
   }
 }

@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
-import { RegiterUserDto } from './dtos';
+import { LocalLoginDto, RegiterUserDto } from './dtos';
 
 @Controller('auth')
 export class AuthController {
@@ -39,4 +39,9 @@ export class AuthController {
       res.status(HttpStatus.NOT_FOUND).send();
     }
   }
+
+  // @Post('login')
+  // login(@Body() dto: LocalLoginDto) {
+  //   return this.authService.login(dto);
+  // }
 }

@@ -30,3 +30,21 @@ export const MAIL_VERIFY_HOST: string =
   process.env.MAIL_VERIFY_HOST || 'http://localhost:3001';
 
 export const HOME: string = process.env.HOME || 'http://localhost:3000';
+
+// jwt
+
+export const ACCESS_TOKEN_SECRET: string =
+  process.env.ACCESS_TOKEN_SECRET || 'access-token-secret';
+// access token expires in 86400 seconds (1 days)
+export const ACCESS_TOKEN_EXPIRES_IN: number = process.env
+  .ACCESS_TOKEN_EXPIRES_IN
+  ? parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN, 10)
+  : 86400;
+
+export const REFRESH_TOKEN_SECRET: string =
+  process.env.REFRESH_TOKEN_SECRET || 'refresh-token-secret';
+// refresh token expires in 604800 seconds (7 days)
+export const REFRESH_TOKEN_EXPIRES_IN: number = process.env
+  .REFRESH_TOKEN_EXPIRES_IN
+  ? parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN, 10)
+  : 604800;
