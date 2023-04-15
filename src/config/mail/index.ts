@@ -1,12 +1,12 @@
 import { MAIL_HOST, MAIL_PASSWORD, MAIL_USER } from '@environments';
-import { MailerOptionsFactory } from '@nestjs-modules/mailer';
+import { MailerOptions, MailerOptionsFactory } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { Injectable } from '@nestjs/common';
 import { join } from 'path';
 
 @Injectable()
 export class MailConfigService implements MailerOptionsFactory {
-  createMailerOptions() {
+  createMailerOptions(): MailerOptions | Promise<MailerOptions> {
     return {
       transport: {
         host: MAIL_HOST,
@@ -17,10 +17,10 @@ export class MailConfigService implements MailerOptionsFactory {
         },
       },
       defaults: {
-        from: `'hello' from ${MAIL_USER}`,
+        from: `'Login Service' from ${MAIL_USER}`,
       },
       template: {
-        dir: join(__dirname, 'templates'),
+        dir: __dirname + '/templates',
         adapter: new HandlebarsAdapter(),
         options: {
           strict: true,

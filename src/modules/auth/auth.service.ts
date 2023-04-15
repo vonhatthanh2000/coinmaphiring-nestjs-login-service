@@ -2,6 +2,7 @@ import { User } from '@entities';
 import { UserStatus } from '@enums';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { hash } from 'argon2';
 import { Repository } from 'typeorm';
 import { MailService } from '../mail/mail.service';
 import { UserService } from '../user/user.service';
@@ -28,6 +29,7 @@ export class AuthService {
       .toUpperCase();
     const userInput = await this.userRepository.create({
       ...dto,
+      password: await hash(dto.password),
       verifyToken,
       status: UserStatus.VERIFY_EMAIL,
     });
@@ -35,5 +37,20 @@ export class AuthService {
     // Send email to user
     await this.mailService.sendUserConfirmationEmail(user, verifyToken);
     return user;
+  }
+
+  async verifyUserAccount(token: string): Promise<boolean> {
+    const splitToken = token.split('-');
+    const verifyToken = splitToken.pop().toUpperCase();
+    const userId = splitToken.join('-');
+
+    // Change user status to active
+    const updated = await this.userRepository.update(
+      { id: userId, verifyToken },
+      {
+        status: UserStatus.ACTIVE,
+      },
+    );
+    if (updated.affected) return true;
   }
 }

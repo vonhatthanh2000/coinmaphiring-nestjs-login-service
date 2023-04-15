@@ -2,7 +2,6 @@ import { User } from '@entities';
 import { MAIL_VERIFY_CALLBACK, MAIL_VERIFY_HOST } from '@environments';
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import path from 'path';
 
 @Injectable()
 export class MailService {
@@ -12,11 +11,11 @@ export class MailService {
     const url = `${MAIL_VERIFY_HOST}/auth/verify/${
       user.id
     }-${token.toLowerCase()}?redirectTo=${MAIL_VERIFY_CALLBACK}`;
-
+    console.log('url :>> ', url);
     await this.mailerService.sendMail({
       to: user.email,
-      subject: 'Welcome to Pikasso! Confirm your Email',
-      template: `${__dirname}/templates/confirmation`,
+      subject: 'Welcome to Login Service! Confirm your Email',
+      template: `confirmation`,
       context: {
         name: user.username,
         url,
