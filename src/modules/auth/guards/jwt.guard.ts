@@ -1,3 +1,4 @@
+import { RequestWithAuth } from '@interfaces';
 import {
   BadRequestException,
   ExecutionContext,
@@ -25,6 +26,12 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     } catch (error) {
       this.logger.error(error);
       throw new BadRequestException(error);
+    }
+  }
+
+  getRequest(context: ExecutionContext): RequestWithAuth {
+    if (context.getType() === 'http') {
+      return context.switchToHttp().getRequest();
     }
   }
 }

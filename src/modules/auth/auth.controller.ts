@@ -1,7 +1,7 @@
 import { CurrentUser } from '@decorators';
 import { User } from '@entities';
 import { GOOGLE_CLIENT_ID, HOME } from '@environments';
-import { AuthToken, Request } from '@interfaces';
+import { AuthToken, Request, RequestWithAuth } from '@interfaces';
 import {
   BadGatewayException,
   Body,
@@ -30,6 +30,7 @@ import {
   TokenDataCookieDto,
 } from './dtos';
 import { JwtAuthGuard } from './guards';
+import { GithubOAuthGuard } from './guards/github.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -89,6 +90,22 @@ export class AuthController {
     return this.authService.authenticateGoogleUser(tokenData.credential);
   }
 
+  @Get('github')
+  @UseGuards(GithubOAuthGuard)
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  github(): void {}
+
+  @Get('github/callback')
+  @UseGuards(GithubOAuthGuard)
+  githubRedirect(
+    @Req() { user }: RequestWithAuth,
+    @Res({ passthrough: true }) res: Response,
+  ): AuthToken {
+    const token = this.authService.generateToken(user.id, user.email);
+    res.send(this.closeWindowScript(token));
+    return token;
+  }
+
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   async changePassword(
@@ -118,5 +135,14 @@ export class AuthController {
     res.clearCookie('accessToken');
 
     return res.status(HttpStatus.OK).send({ status: true });
+  }
+
+  private closeWindowScript(authToken: AuthToken): string {
+    return `
+      <script>
+        window.opener.postMessage('${authToken.accessToken}', '*');
+        window.close();
+      </script>
+    `;
   }
 }

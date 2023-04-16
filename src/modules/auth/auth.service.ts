@@ -10,12 +10,14 @@ import {
   REFRESH_TOKEN_SECRET,
   RESET_PASSWORD_TOKEN_SECRET,
 } from '@environments';
-import { AuthToken } from '@interfaces';
+import { AuthPayload, AuthToken } from '@interfaces';
 import {
   BadGatewayException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Profile as GithubProfile } from 'passport-github2';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { hash, verify } from 'argon2';
@@ -29,14 +31,18 @@ import {
   ResetPasswordDto,
 } from './dtos';
 import { google } from 'googleapis';
+import { Logger } from 'winston';
 import { OAuth2Client } from 'google-auth-library';
 import { UserResponse } from '../user/dtos';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 @Injectable()
 export class AuthService {
   private oauthClient: OAuth2Client;
 
   constructor(
+    @Inject(WINSTON_MODULE_NEST_PROVIDER)
+    private readonly logger: Logger,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly userService: UserService,
     private readonly mailService: MailService,
@@ -174,6 +180,53 @@ export class AuthService {
     });
 
     return await this.userRepository.save(newUser);
+  }
+
+  async validateGithubUser(
+    accessToken: string,
+    githubProfile: GithubProfile,
+  ): Promise<AuthPayload> {
+    if (!githubProfile.emails) {
+      this.logger.error(
+        `Github profile doesn't have email: ${JSON.stringify(githubProfile)}`,
+      );
+      throw new Error('Email is required');
+    }
+
+    if (githubProfile.emails.at(0) === undefined) {
+      this.logger.error(
+        `Github profile doesn't have email: ${JSON.stringify(githubProfile)}`,
+      );
+      throw new Error('Email is required');
+    }
+
+    const email = githubProfile.emails.at(0).value;
+    let user = await this.userService.findByEmail(email);
+    if (user) {
+      if (user.status !== UserStatus.ACTIVE)
+        await this.userRepository.update(
+          { id: user.id },
+          { status: UserStatus.ACTIVE },
+        );
+    } else {
+      const verifyToken = Math.random()
+        .toString(36)
+        .replace(/[^a-z]+/g, '')
+        .substr(0, 5)
+        .toUpperCase();
+
+      const newUser = await this.userRepository.create({
+        email,
+        verifyToken,
+        status: UserStatus.ACTIVE,
+      });
+      user = await this.userRepository.save(newUser);
+    }
+    return {
+      email: email,
+      id: user.id,
+      name: githubProfile.displayName,
+    };
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<User> {

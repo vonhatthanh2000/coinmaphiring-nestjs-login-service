@@ -64,3 +64,17 @@ export const GOOGLE_CLIENT_SECRET: string =
 export const GOOGLE_CALLBACK_URL: string =
   process.env.GOOGLE_CALLBACK_URL ||
   'http://localhost:3001/auth/google/callback';
+
+// github
+// github
+export const GITHUB_CLIENT_ID: string =
+  process.env.GITHUB_CLIENT_ID || '1d0081d5763b3113d952';
+export const GITHUB_CLIENT_SECRET: string =
+  process.env.GITHUB_CLIENT_SECRET ||
+  '80f6ec85480787a608e900603ff98b7c47406699';
+export const GITHUB_CALLBACK_URL: string =
+  process.env.GITHUB_CALLBACK_URL ||
+  'http://localhost:3001/auth/github/callback';
+
+export const APP_NAME = 'Login Service';
+export const NODE_ENV = 'production' || 'test';
