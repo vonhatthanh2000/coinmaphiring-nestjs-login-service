@@ -25,12 +25,56 @@
 ## Description
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Serivce has 2 options to login:
+
+1. Login with username(email)/password
+2. Login with Google/Github (Oauth2)
 
 ## Installation
 
 ```bash
 $ yarn install
 ```
+
+## Migration
+
+```bash
+$ npm run dbm:generate --name=AddUser
+$ yarn dbm:run
+
+```
+
+## Login with username/password
+
+```bash
+run localhost:3001/auth/register
+enter your username, email, password
+open your email to activate this account
+
+Now you can login with username/password
+or email/password
+
+You can change or reset the password also
+```
+
+## Login with Google
+
+```bash
+Because The support of Google Sign-In JavaScript platform library for Web is set to be deprecated after March 31, 2023.
+In this service, I use the new Google Identity Services for Web.
+You have to clone this front-end repo to test it
+https://github.com/vonhatthanh2000/reactjs-client
+(Im not good at front end, just write the code to test it)
+```
+
+## Login with Github
+
+```bash
+localhost:3001/auth/github
+
+```
+
+## This service will merge account if your accounts have the same email
 
 ## Running the app
 
