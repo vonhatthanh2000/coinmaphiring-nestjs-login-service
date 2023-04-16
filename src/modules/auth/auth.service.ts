@@ -8,6 +8,7 @@ import {
   GOOGLE_CLIENT_SECRET,
   REFRESH_TOKEN_EXPIRES_IN,
   REFRESH_TOKEN_SECRET,
+  RESET_PASSWORD_TOKEN_SECRET,
 } from '@environments';
 import { AuthToken } from '@interfaces';
 import {
@@ -21,9 +22,15 @@ import { hash, verify } from 'argon2';
 import { Repository } from 'typeorm';
 import { MailService } from '../mail/mail.service';
 import { UserService } from '../user/user.service';
-import { ChangePasswordDto, LocalLoginDto, RegiterUserDto } from './dtos';
+import {
+  ChangePasswordDto,
+  LocalLoginDto,
+  RegiterUserDto,
+  ResetPasswordDto,
+} from './dtos';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
+import { UserResponse } from '../user/dtos';
 
 @Injectable()
 export class AuthService {
@@ -42,7 +49,7 @@ export class AuthService {
     );
   }
 
-  async registerUserAccount(dto: RegiterUserDto): Promise<User> {
+  async registerUserAccount(dto: RegiterUserDto): Promise<UserResponse> {
     if (await this.userService.existByEmail(dto.email))
       throw new Error('Email already exists');
     if (await this.userService.existByUsername(dto.username))
@@ -62,7 +69,7 @@ export class AuthService {
     const user = await this.userRepository.save(userInput);
     // Send email to user
     await this.mailService.sendUserConfirmationEmail(user, verifyToken);
-    return user;
+    return await this.userService.getUserResponse(user);
   }
 
   async verifyUserAccount(token: string): Promise<boolean> {
@@ -154,10 +161,18 @@ export class AuthService {
   async validateGoogleUser(email: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { email } });
     if (user) return user;
+
+    const verifyToken = Math.random()
+      .toString(36)
+      .replace(/[^a-z]+/g, '')
+      .substr(0, 5)
+      .toUpperCase();
     const newUser = await this.userRepository.create({
       email,
+      verifyToken,
       status: UserStatus.ACTIVE,
     });
+
     return await this.userRepository.save(newUser);
   }
 
@@ -171,5 +186,50 @@ export class AuthService {
     if (!validation) throw new UnauthorizedException('Invalid password');
     user.password = await hash(dto.newPassword);
     return await this.userRepository.save(user);
+  }
+
+  async requestResetPassword(email: string): Promise<boolean> {
+    const user = await this.userService.findByEmail(email);
+    const resetToken = this.generateResetPasswordToken(
+      user.id,
+      user.verifyToken,
+    );
+
+    // send mail to reset password
+    await this.mailService.sendUserResetPassword(user, resetToken);
+    return true;
+  }
+
+  async resetPassword(
+    userId,
+    verifyToken,
+    dto: ResetPasswordDto,
+  ): Promise<boolean> {
+    const user = await this.userRepository.findOneOrFail({
+      where: { id: userId, verifyToken },
+    });
+    const newVerifyToken = Math.random()
+      .toString(36)
+      .replace(/[^a-z]+/g, '')
+      .substr(0, 5)
+      .toUpperCase();
+    await this.userRepository.update(
+      { id: user.id },
+      { verifyToken: newVerifyToken, password: await hash(dto.password) },
+    );
+    return true;
+  }
+
+  generateResetPasswordToken(userId: string, verifyToken: string): string {
+    return this.jwtService.sign(
+      {
+        sub: userId,
+        key: verifyToken,
+      },
+      {
+        secret: RESET_PASSWORD_TOKEN_SECRET,
+        expiresIn: '1h',
+      },
+    );
   }
 }

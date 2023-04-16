@@ -13,15 +13,19 @@ import {
   Post,
   Query,
   Req,
+  Request as NRequest,
   Res,
   UseGuards,
 } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { Response } from 'express';
+import { UserResponse } from '../user/dtos';
 import { AuthService } from './auth.service';
 import {
   ChangePasswordDto,
   LocalLoginDto,
   RegiterUserDto,
+  ResetPasswordDto,
   TokenDataBodyDto,
   TokenDataCookieDto,
 } from './dtos';
@@ -32,7 +36,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(@Body() dto: RegiterUserDto): Promise<User> {
+  register(@Body() dto: RegiterUserDto): Promise<UserResponse> {
     return this.authService.registerUserAccount(dto);
   }
 
@@ -53,6 +57,7 @@ export class AuthController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
   @Post('login')
   async login(@Body() dto: LocalLoginDto): Promise<AuthToken> {
     const isEmail = this.authService.checkIfEmail(dto.username);
@@ -93,6 +98,19 @@ export class AuthController {
   ) {
     await this.authService.changePassword(user.id, dto);
     res.clearCookie('accessToken');
+  }
+
+  @Post('request-reset-password')
+  async requestResetPassword(@Body('email') email: string): Promise<boolean> {
+    return this.authService.requestResetPassword(email);
+  }
+
+  @Post('reset-password')
+  @UseGuards(AuthGuard('jwt-reset-password'))
+  async resetPassword(@NRequest() req, @Body() dto: ResetPasswordDto) {
+    const { id, verifyToken } = req;
+    if (!id || !verifyToken) throw new BadGatewayException('Invalid token');
+    await this.authService.resetPassword(id, verifyToken, dto);
   }
 
   @Delete('logout')

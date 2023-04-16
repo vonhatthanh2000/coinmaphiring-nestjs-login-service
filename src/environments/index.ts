@@ -41,6 +41,9 @@ export const ACCESS_TOKEN_EXPIRES_IN: number = process.env
   ? parseInt(process.env.ACCESS_TOKEN_EXPIRES_IN, 10)
   : 86400;
 
+export const RESET_PASSWORD_TOKEN_SECRET: string =
+  process.env.RESET_PASSWORD_TOKEN_SECRET || 'reset-password-token-secret';
+
 export const REFRESH_TOKEN_SECRET: string =
   process.env.REFRESH_TOKEN_SECRET || 'refresh-token-secret';
 // refresh token expires in 604800 seconds (7 days)
