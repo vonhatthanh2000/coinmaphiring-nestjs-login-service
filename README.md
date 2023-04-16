@@ -36,9 +36,18 @@ Serivce has 2 options to login:
 $ yarn install
 ```
 
+## Environment
+
+```bash
+copy environment from .env.example to .env
+$ cp .env.example .env
+```
+
 ## Migration
 
 ```bash
+Create database before running code
+
 $ npm run dbm:generate --name=AddUser
 $ yarn dbm:run
 
@@ -64,7 +73,7 @@ Because The support of Google Sign-In JavaScript platform library for Web is set
 In this service, I use the new Google Identity Services for Web.
 You have to clone this front-end repo to test it
 https://github.com/vonhatthanh2000/reactjs-client
-(Im not good at front end, just write the code to test it)
+( Im not good at front end, just write the code to test it)
 ```
 
 ## Login with Github
@@ -89,29 +98,15 @@ $ yarn run start:dev
 $ yarn run start:prod
 ```
 
-## Test
+## Swagger API
 
 ```bash
-# unit tests
-$ yarn run test
 
-# e2e tests
-$ yarn run test:e2e
+http://localhost:3000/api/
 
-# test coverage
-$ yarn run test:cov
 ```
 
-## Support
+## Swagger API
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](LICENSE).
+For the environment, I store it in @environment folder for easier to test
+We have Email service, Oauth2 key of Google, github

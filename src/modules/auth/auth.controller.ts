@@ -70,6 +70,7 @@ export class AuthController {
   }
 
   @Post('google/login')
+  // @UseGuards(GoogleAuthGuard)
   async googleLogin(@Body() token: TokenDataBodyDto): Promise<AuthToken> {
     const clientId = GOOGLE_CLIENT_ID;
     if (token.clientId !== clientId)
@@ -78,6 +79,7 @@ export class AuthController {
   }
 
   @Post('google/callback')
+  // @UseGuards(GoogleAuthGuard)
   async handleGoogleRedirectPost(
     @Req() req: Request,
     @Body() tokenData: TokenDataCookieDto,

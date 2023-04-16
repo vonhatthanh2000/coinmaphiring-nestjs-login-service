@@ -6,7 +6,7 @@ import { MailModule, UserModule } from '@modules';
 import { User } from '@entities';
 import { JwtModule } from '@nestjs/jwt';
 import { GithubStrategy, JwtStrategy } from './strategies';
-// import { GoogleStrategy } from './strategies/google.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
@@ -15,7 +15,7 @@ import { GithubStrategy, JwtStrategy } from './strategies';
     MailModule,
     JwtModule,
   ],
-  providers: [AuthService, JwtStrategy, GithubStrategy],
+  providers: [AuthService, JwtStrategy, GithubStrategy, GoogleStrategy],
   controllers: [AuthController],
 })
 export class AuthModule {}
