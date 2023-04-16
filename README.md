@@ -64,7 +64,7 @@ Because The support of Google Sign-In JavaScript platform library for Web is set
 In this service, I use the new Google Identity Services for Web.
 You have to clone this front-end repo to test it
 https://github.com/vonhatthanh2000/reactjs-client
-(Im not good at front end, just write the code to test it)
+( Im not good at front end, just write the code to test it)
 ```
 
 ## Login with Github
