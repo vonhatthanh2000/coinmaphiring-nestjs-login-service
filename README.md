@@ -106,7 +106,7 @@ http://localhost:3000/api/
 
 ```
 
-## Swagger API
+## Environment
 
 For the environment, I store it in @environment folder for easier to test
 We have Email service, Oauth2 key of Google, github
