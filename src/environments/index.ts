@@ -48,3 +48,16 @@ export const REFRESH_TOKEN_EXPIRES_IN: number = process.env
   .REFRESH_TOKEN_EXPIRES_IN
   ? parseInt(process.env.REFRESH_TOKEN_EXPIRES_IN, 10)
   : 604800;
+
+// Goolge OAuth2
+
+export const GOOGLE_CLIENT_ID: string =
+  process.env.GOOGLE_CLIENT_ID ||
+  '764611206424-jp41753hn12gb0r0ruih2431hkbp9j4g.apps.googleusercontent.com';
+
+export const GOOGLE_CLIENT_SECRET: string =
+  process.env.GOOGLE_CLIENT_SECRET || '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';
+
+export const GOOGLE_CALLBACK_URL: string =
+  process.env.GOOGLE_CALLBACK_URL ||
+  'http://localhost:3001/auth/google/callback';

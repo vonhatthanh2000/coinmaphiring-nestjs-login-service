@@ -6,6 +6,7 @@ import { MailModule, UserModule } from '@modules';
 import { User } from '@entities';
 import { JwtModule } from '@nestjs/jwt';
 import { JwtStrategy } from './strategies';
+// import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [

@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ACCESS_TOKEN_SECRET } from '@environments';
 import { UserService } from 'src/modules/user/user.service';
 import { User } from '@entities';
-import { UserLogin } from '@interfaces';
+import { AuthPayload } from '@interfaces';
 import { UserStatus } from '@enums';
 
 @Injectable()
@@ -17,7 +17,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: UserLogin): Promise<User> {
+  async validate(payload: AuthPayload): Promise<User> {
     const user = await this.userService.findUser(payload);
     if (!user) {
       throw new UnauthorizedException();

@@ -1,5 +1,5 @@
 import { User } from '@entities';
-import { UserLogin } from '@interfaces';
+import { AuthPayload } from '@interfaces';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -33,10 +33,10 @@ export class UserService {
     return this.userRepository.findOne({ where: { email } });
   }
 
-  async findUser(dto: UserLogin): Promise<User> {
-    const { email, username } = dto;
-    if (email) return this.findByEmail(email);
-    if (username) return this.findByUsername(username);
+  async findUser(dto: AuthPayload): Promise<User> {
+    return this.userRepository.findOne({
+      where: { id: dto.id, email: dto.email },
+    });
   }
 
   getUserResponse(user: User): UserResponse {

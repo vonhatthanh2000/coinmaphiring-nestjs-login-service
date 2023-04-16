@@ -3,27 +3,44 @@ import { UserStatus } from '@enums';
 import {
   ACCESS_TOKEN_EXPIRES_IN,
   ACCESS_TOKEN_SECRET,
+  GOOGLE_CALLBACK_URL,
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
   REFRESH_TOKEN_EXPIRES_IN,
   REFRESH_TOKEN_SECRET,
 } from '@environments';
 import { AuthToken } from '@interfaces';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { hash, verify } from 'argon2';
 import { Repository } from 'typeorm';
 import { MailService } from '../mail/mail.service';
 import { UserService } from '../user/user.service';
-import { LocalLoginDto, RegiterUserDto } from './dtos';
+import { ChangePasswordDto, LocalLoginDto, RegiterUserDto } from './dtos';
+import { google } from 'googleapis';
+import { OAuth2Client } from 'google-auth-library';
 
 @Injectable()
 export class AuthService {
+  private oauthClient: OAuth2Client;
+
   constructor(
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     private readonly userService: UserService,
     private readonly mailService: MailService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    this.oauthClient = new google.auth.OAuth2(
+      GOOGLE_CLIENT_ID,
+      GOOGLE_CLIENT_SECRET,
+      GOOGLE_CALLBACK_URL,
+    );
+  }
 
   async registerUserAccount(dto: RegiterUserDto): Promise<User> {
     if (await this.userService.existByEmail(dto.email))
@@ -63,36 +80,44 @@ export class AuthService {
     if (updated.affected) return true;
   }
 
-  login(payload: LocalLoginDto): AuthToken {
-    return this.generateToken(payload);
-  }
+  // login(payload: LocalLoginDto): AuthToken {
+  //   return this.generateToken(payload);
+  // }
 
   async localLogin(dto: LocalLoginDto): Promise<AuthToken> {
-    const isValidated = await this.validateLocalLogin(dto);
-    if (isValidated) return this.generateToken(dto);
+    const user = await this.validateLocalLogin(dto);
+    if (user) return this.generateToken(user.id, user.email);
     throw new UnauthorizedException('Invalid email or password');
   }
 
-  async validateLocalLogin(dto: LocalLoginDto): Promise<boolean> {
+  async validateLocalLogin(dto: LocalLoginDto): Promise<User> {
     const { username, email, password } = dto;
 
     const query = {} as LocalLoginDto;
     if (username) query.username = username;
     if (email) query.email = email;
     const user = await this.userRepository.findOneOrFail({ where: query });
-    return verify(user.password, password);
+    const validation = await verify(user.password, password);
+    if (!validation) throw new UnauthorizedException('Invalid password');
+    return user;
   }
 
-  generateToken(payload: LocalLoginDto): AuthToken {
-    const accessToken = this.jwtService.sign(payload, {
-      secret: ACCESS_TOKEN_SECRET,
-      expiresIn: ACCESS_TOKEN_EXPIRES_IN,
-    });
+  generateToken(userId: string, email: string): AuthToken {
+    const accessToken = this.jwtService.sign(
+      { id: userId, email },
+      {
+        secret: ACCESS_TOKEN_SECRET,
+        expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+      },
+    );
 
-    const refreshToken = this.jwtService.sign(payload, {
-      secret: REFRESH_TOKEN_SECRET,
-      expiresIn: REFRESH_TOKEN_EXPIRES_IN,
-    });
+    const refreshToken = this.jwtService.sign(
+      { sub: userId, email },
+      {
+        secret: REFRESH_TOKEN_SECRET,
+        expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+      },
+    );
 
     return {
       accessToken,
@@ -106,5 +131,45 @@ export class AuthService {
       /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/gi;
 
     return regexExp.test(email);
+  }
+
+  // Authen by google
+  async authenticateGoogleUser(token: string): Promise<AuthToken> {
+    const ticket = await this.oauthClient.verifyIdToken({
+      idToken: token,
+      audience: GOOGLE_CLIENT_ID,
+    });
+    const tokenInfo = ticket.getPayload();
+    if (tokenInfo?.email && tokenInfo?.name) {
+      const { email, name } = tokenInfo;
+      const user = await this.validateGoogleUser(email);
+      if (user) {
+        return this.generateToken(user.id, user.email);
+      }
+    }
+
+    throw new BadGatewayException('Verify token fail!');
+  }
+
+  async validateGoogleUser(email: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { email } });
+    if (user) return user;
+    const newUser = await this.userRepository.create({
+      email,
+      status: UserStatus.ACTIVE,
+    });
+    return await this.userRepository.save(newUser);
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<User> {
+    const user = await this.userRepository.findOneOrFail({
+      where: {
+        id: userId,
+      },
+    });
+    const validation = await verify(user.password, dto.oldPassword);
+    if (!validation) throw new UnauthorizedException('Invalid password');
+    user.password = await hash(dto.newPassword);
+    return await this.userRepository.save(user);
   }
 }

@@ -11,7 +11,6 @@ export class MailService {
     const url = `${MAIL_VERIFY_HOST}/auth/verify/${
       user.id
     }-${token.toLowerCase()}?redirectTo=${MAIL_VERIFY_CALLBACK}`;
-    console.log('url :>> ', url);
     await this.mailerService.sendMail({
       to: user.email,
       subject: 'Welcome to Login Service! Confirm your Email',
