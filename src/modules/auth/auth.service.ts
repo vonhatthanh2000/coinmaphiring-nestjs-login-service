@@ -7,15 +7,14 @@ import {
   REFRESH_TOKEN_SECRET,
 } from '@environments';
 import { AuthToken } from '@interfaces';
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { hash, verify } from 'argon2';
-import { AuthPayload } from 'src/interfaces/auth-payload.interface';
 import { Repository } from 'typeorm';
 import { MailService } from '../mail/mail.service';
 import { UserService } from '../user/user.service';
-import { RegiterUserDto } from './dtos';
+import { LocalLoginDto, RegiterUserDto } from './dtos';
 
 @Injectable()
 export class AuthService {
@@ -64,32 +63,27 @@ export class AuthService {
     if (updated.affected) return true;
   }
 
-  async validateLocalLogin(
-    email: string,
-    password: string,
-  ): Promise<AuthPayload | null> {
-    const user = await this.userRepository.findOne({
-      where: { email },
-      select: ['id', 'username', 'password'],
-    });
-
-    if (!user) return null;
-
-    const compared = await verify(user.password, password);
-    if (compared)
-      return {
-        id: user.id,
-        name: user.username,
-        email: user.email,
-      };
-    return null;
-  }
-
-  login(payload: AuthPayload): AuthToken {
+  login(payload: LocalLoginDto): AuthToken {
     return this.generateToken(payload);
   }
 
-  generateToken(payload: AuthPayload): AuthToken {
+  async localLogin(dto: LocalLoginDto): Promise<AuthToken> {
+    const isValidated = await this.validateLocalLogin(dto);
+    if (isValidated) return this.generateToken(dto);
+    throw new UnauthorizedException('Invalid email or password');
+  }
+
+  async validateLocalLogin(dto: LocalLoginDto): Promise<boolean> {
+    const { username, email, password } = dto;
+
+    const query = {} as LocalLoginDto;
+    if (username) query.username = username;
+    if (email) query.email = email;
+    const user = await this.userRepository.findOneOrFail({ where: query });
+    return verify(user.password, password);
+  }
+
+  generateToken(payload: LocalLoginDto): AuthToken {
     const accessToken = this.jwtService.sign(payload, {
       secret: ACCESS_TOKEN_SECRET,
       expiresIn: ACCESS_TOKEN_EXPIRES_IN,
@@ -104,5 +98,13 @@ export class AuthService {
       accessToken,
       refreshToken,
     };
+  }
+
+  checkIfEmail(email: string): boolean {
+    // Regular expression to check if string is email
+    const regexExp =
+      /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/gi;
+
+    return regexExp.test(email);
   }
 }

@@ -3,3 +3,8 @@ export interface AuthPayload {
   name: null | string;
   email: string;
 }
+
+export interface UserLogin {
+  email: string | null;
+  username: string | null;
+}

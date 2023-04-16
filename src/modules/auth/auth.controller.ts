@@ -9,10 +9,12 @@ import {
   Post,
   Query,
   Res,
+  UseGuards,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { LocalLoginDto, RegiterUserDto } from './dtos';
+import { JwtAuthGuard } from './guards';
 
 @Controller('auth')
 export class AuthController {
@@ -40,8 +42,13 @@ export class AuthController {
     }
   }
 
-  // @Post('login')
-  // login(@Body() dto: LocalLoginDto) {
-  //   return this.authService.login(dto);
-  // }
+  @Post('login')
+  login(@Body() dto: LocalLoginDto) {
+    const isEmail = this.authService.checkIfEmail(dto.username);
+    if (isEmail) {
+      dto.email = dto.username;
+      delete dto.username;
+    }
+    return this.authService.localLogin(dto);
+  }
 }

@@ -4,7 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ACCESS_TOKEN_SECRET } from '@environments';
 import { UserService } from 'src/modules/user/user.service';
 import { User } from '@entities';
-import { AuthPayload } from '@interfaces';
+import { UserLogin } from '@interfaces';
 import { UserStatus } from '@enums';
 
 @Injectable()
@@ -17,11 +17,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: AuthPayload): Promise<User> {
-    const user = await this.userService.findByEmail(payload.email);
-    if (!user || user.status !== UserStatus.ACTIVE) {
+  async validate(payload: UserLogin): Promise<User> {
+    const user = await this.userService.findUser(payload);
+    if (!user) {
       throw new UnauthorizedException();
-    }
+    } else if (user.status !== UserStatus.ACTIVE)
+      throw new Error('This account is not active yet');
 
     return user;
   }
